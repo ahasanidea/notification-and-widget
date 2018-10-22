@@ -4,6 +4,7 @@ import android.annotation.TargetApi
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.app.TaskStackBuilder
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
@@ -25,44 +26,35 @@ object ReminderNotification {
     /**
      * The unique identifier for this type of notification.
      */
-    private val NOTIFICATION_TAG = "Reminder"
-
+    private const val NOTIFICATION_TAG = "Reminder"
+const val REMINDER_CHANNEL="reminders"
     /**
      * Shows the notification, or updates a previously shown notification of
      * this type, with the given parameters.
-     *
-     *
-     * TODO: Customize this method's arguments to present relevant content in
-     * the notification.
-     *
-     *
-     * TODO: Customize the contents of this method to tweak the behavior and
-     * presentation of reminder notifications. Make
-     * sure to follow the
-     * [
- * Notification design guidelines](https://developer.android.com/design/patterns/notifications.html) when doing so.
+     * Notification design guidelines](https://developer.android.com/design/patterns/notifications.html) when doing so.
      *
      * @see .cancel
      */
     fun notify(
-        context: Context,
-        exampleString: String, number: Int
+        context: Context,titleText:String,
+        noteText: String, notePosition: Int
     ) {
-        val res = context.resources
+        val shareIntent = PendingIntent.getActivity(context,
+            0,
+            Intent.createChooser(Intent(Intent.ACTION_SEND)
+                .setType("text/plain")
+                .putExtra(Intent.EXTRA_TEXT,
+                    noteText
+                ),
+                "Share Note Reminder"),
+            PendingIntent.FLAG_UPDATE_CURRENT)
+        val intent = Intent(context, NoteActivity::class.java)
+        intent.putExtra(NOTE_POSITION, notePosition)
 
-        // This image is used as the notification's large icon (thumbnail).
-        // TODO: Remove this if your notification has no relevant thumbnail.
-        val picture = BitmapFactory.decodeResource(res, R.drawable.example_picture)
-
-
-        val title = res.getString(
-            R.string.reminder_notification_title_template, exampleString
-        )
-        val text = res.getString(
-            R.string.reminder_notification_placeholder_text_template, exampleString
-        )
-
-        val builder = NotificationCompat.Builder(context)
+        val pendingIntent = TaskStackBuilder.create(context)
+            .addNextIntentWithParentStack(intent)
+            .getPendingIntent(0, PendingIntent.FLAG_CANCEL_CURRENT)
+        val builder = NotificationCompat.Builder(context, REMINDER_CHANNEL)
 
             // Set appropriate defaults for the notification light, sound,
             // and vibration.
@@ -71,8 +63,8 @@ object ReminderNotification {
             // Set required fields, including the small icon, the
             // notification title, and text.
             .setSmallIcon(R.drawable.ic_stat_reminder)
-            .setContentTitle(title)
-            .setContentText(text)
+            .setContentTitle(titleText)
+            .setContentText(noteText)
 
             // All fields below this line are optional.
 
@@ -82,46 +74,23 @@ object ReminderNotification {
 
             // Provide a large icon, shown with the notification in the
             // notification drawer on devices running Android 3.0 or later.
-            .setLargeIcon(picture)
+            //.setLargeIcon(picture)
 
             // Set ticker text (preview) information for this notification.
-            .setTicker(exampleString)
+            .setTicker(titleText)
 
             // Show a number. This is useful when stacking notifications of
             // a single type.
-            .setNumber(number)
-
-            // If this notification relates to a past or upcoming event, you
-            // should set the relevant time information using the setWhen
-            // method below. If this call is omitted, the notification's
-            // timestamp will by set to the time at which it was shown.
-            // TODO: Call setWhen if this notification relates to a past or
-            // upcoming event. The sole argument to this method should be
-            // the notification timestamp in milliseconds.
-            //.setWhen(...)
+            //.setNumber(number)
 
             // Set the pending intent to be initiated when the user touches
             // the notification.
-            .setContentIntent(
-                PendingIntent.getActivity(
-                    context,
-                    0,
-                    Intent(Intent.ACTION_VIEW, Uri.parse("http://www.google.com")),
-                    PendingIntent.FLAG_UPDATE_CURRENT
-                )
-            )
-
-            // Show expanded text content on devices running Android 4.1 or
-            // later.
-            .setStyle(
-                NotificationCompat.BigTextStyle()
-                    .bigText(text)
-                    .setBigContentTitle(title)
-                    .setSummaryText("Dummy summary text")
-            )
+            .setContentIntent(pendingIntent)
 
             // Automatically dismiss the notification when it is touched.
             .setAutoCancel(true)
+            //Add a share action
+            .addAction(R.drawable.ic_share_black_24dp,"Share",shareIntent)
 
         notify(context, builder.build())
     }

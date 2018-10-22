@@ -64,7 +64,7 @@ class NoteActivity : AppCompatActivity() {
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
             R.id.action_reminder ->{
-                ReminderNotification.notify(this,"Reminder",notePosition)
+                ReminderNotification.notify(this,"Reminder",getString(R.string.reminder_body,DataManager.notes[notePosition].title),notePosition)
                 true
             }
             R.id.action_cancel -> {
